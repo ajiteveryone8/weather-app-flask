@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+
+    <!-- Include jQuery and Select2 CSS/JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 375px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .app-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .weather-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .temp {
+            font-size: 64px;
+            font-weight: bold;
+            color: #4f87e4;
+        }
+
+        .condition {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #777;
+        }
+
+        .location {
+            font-size: 18px;
+            margin-top: 5px;
+            color: #333;
+        }
+
+        .search-bar {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 70%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+        }
+
+        .search-button {
+            padding: 10px 15px;
+            background-color: #4f87e4;
+            border: none;
+            border-radius: 25px;
+            margin-left: 10px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .search-button:hover {
+            background-color: #357ad8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <div id="loading">Fetching Data... <img src="https://i.gifer.com/ZZ5H.gif" width="20px" /></div>
+        <div class="app-header">Weather App</div>
+        <div class="weather-info">
+            <div class="temp" id="temperature">-°C</div>
+            <!--div class="condition" id="weather-condition">Sunny</div-->
+            <div class="condition" id="windspeed">--</div>
+            <div class="condition" id="elevation">--</div>
+            <div class="location" id="location">--</div>
+        </div>
+        <!--div class="search-bar">
+            <input type="text" class="search-input" id="city-input" placeholder="Enter city name">
+            <button class="search-button" onclick="getWeather()">Search</button>
+        </div-->
+
+        <div class="search-bar">
+            <table>
+
+                <tr>
+                    <td> <label for="country-select">Select Country:</label></td>
+                    <td> <select id="country-select" class="select2" style="width:120%">
+                            <option value="">Select a country</option>
+                            <!-- Countries will be populated here -->
+                        </select></td>
+                </tr>
+
+                <tr>
+                    <td><label for="city-select">Select City:</label></td>
+                    <td> <select id="city-select" class="select2" style="width:120%" disabled>
+                            <option value="">Select a city</option>
+                            <!-- Cities will be populated here based on country selection -->
+                        </select></td>
+                </tr>
+
+            </table>
+
+
+        </div>
+
+        <div class="search-bar">
+
+            <button class="search-button" onclick="getWeather()">Search</button>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder weather data for demonstration purposes
+        const weatherData = {
+            NewYork: { temp: '22°C', condition: 'Sunny' },
+            London: { temp: '15°C', condition: 'Cloudy' },
+            Paris: { temp: '18°C', condition: 'Rainy' },
+        };
+
+        $("#loading").hide();
+
+       
+
+        function getWeather(city, country) {
+
+
+            if (typeof(city) == "undefined"&& typeof(country) == "undefined")
+            {
+
+                city = document.getElementById('city-select').value.trim();
+                country = document.getElementById('country-select').value.trim();
+            }
+
+           
+
+            // Update weather information
+            /* document.getElementById('temperature').textContent = weather.temp;
+             document.getElementById('weather-condition').textContent = weather.condition;
+             document.getElementById('location').textContent = city || 'Unknown';*/
+
+
+
+            $.ajax({
+                url: "/weatherdata/" + city,  // Update with your Flask server URL
+                method: "GET",
+                dataType: "json", // Assuming the response is JSON
+                beforeSend: function () {
+                    // Show the loading icon before making the AJAX call
+                    $("#loading").show();
+                },
+                success: function (response) {
+                    // Assuming the response JSON looks like: { "temperature": 25 }
+                    $("#temperature").text(response.temperature + "°C");
+                    $("#windspeed").text("Wind Speed : " + response.windspeed + " km/h");
+                    $("#elevation").text("Elevation : " + response.elevation + " m");
+                    $("#location").text(country + ", " + city);
+                    
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching temperature:", error);
+                    $("#temp").text("Failed to load temperature.");
+                },
+                complete: function () {
+                    // Hide the loading icon after the AJAX call (success or error)
+                    $("#loading").hide();
+                }
+            });
+        }
+
+
+        $(document).ready(function () {
+
+            const countrySelect = $('#country-select');
+            const citySelect = $('#city-select');
+
+
+            // Load country-city data from external JSON file
+            $.getJSON('/static/country-cities.json', function (data) {
+
+                // Populate country dropdown
+                data.forEach(item => {
+                    countrySelect.append(new Option(item.country, item.country));
+                });
+
+                // Initialize Select2 for searchable dropdowns
+                $('.select2').select2();
+
+                // Change event for country selection
+                countrySelect.on('change', function () {
+                    const selectedCountry = $(this).val();
+                    citySelect.prop('disabled', !selectedCountry);
+
+                    if (selectedCountry) {
+                        // Find the selected country's cities
+                        const countryData = data.find(item => item.country === selectedCountry);
+                        const cities = countryData ? countryData.cities : [];
+
+                        // Clear and populate city dropdown
+                        citySelect.empty().append(new Option("Select a city", ""));
+                        cities.forEach(city => {
+                            citySelect.append(new Option(city, city));
+                        });
+
+                        citySelect.trigger('change');
+                    } else {
+                        citySelect.empty().append(new Option("Select a city", ""));
+                    }
+                });
+            });
+
+            getWeather('Jaipur', 'India')
+        });
+    </script>
+</body>
+
+</html>
